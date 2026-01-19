@@ -589,12 +589,8 @@
       const images = root.querySelectorAll("img");
       for (const img of images) {
         if (!img.complete) {
-          img.addEventListener("load", () => this.layout(), {
-            once: true,
-          });
-          img.addEventListener("error", () => this.layout(), {
-            once: true,
-          });
+          img.addEventListener("load", () => this.layout(), { once: true });
+          img.addEventListener("error", () => this.layout(), { once: true });
         }
       }
     }
@@ -886,6 +882,7 @@
       }
     }
 
+    // TODO: Remove because the code to parse stylesheets can do this better
     // Check style elements directly and parse raw CSS
     const styleElements = document.querySelectorAll("style");
     for (const styleEl of styleElements) {
@@ -925,40 +922,64 @@
       }
     }
 
-    // Also check stylesheet rules (may work for some browsers)
-    for (const sheet of document.styleSheets) {
-      try {
-        const rules = sheet.cssRules || sheet.rules;
-        if (!rules) continue;
 
-        for (const rule of rules) {
-          if (rule.cssText && /display\s*:\s*grid-lanes/i.test(rule.cssText)) {
-            if (
-              rule.selectorText &&
-              !gridLanesSelectors.has(rule.selectorText)
-            ) {
-              gridLanesSelectors.add(rule.selectorText);
-              const props = parseCSSProperties(rule.cssText);
-              try {
-                const elements = document.querySelectorAll(rule.selectorText);
-                for (const el of elements) {
-                  containers.add(el);
-                  if (!parsedGridLanesRules.has(el)) {
-                    parsedGridLanesRules.set(el, props);
-                  }
-                }
-              } catch (e) {
-                // Invalid selector, skip
+    // Also check stylesheet rules (may work for some browsers)
+
+    const parseCSSRule = rule => {
+      if (rule.cssText && (
+          /display\s*:\s*grid-lanes/i.test(rule.cssText) ||
+          /--grid-lanes-polyfill:\s*1/i.test(rule.cssText) // This check is needed because some browsers strip display: grid-lanes as they think it is invalid
+        )) {
+        if (
+          rule.selectorText &&
+          !gridLanesSelectors.has(rule.selectorText)
+        ) {
+          gridLanesSelectors.add(rule.selectorText);
+          const props = parseCSSProperties(rule.cssText);
+          try {
+            const elements = document.querySelectorAll(rule.selectorText);
+            for (const el of elements) {
+              containers.add(el);
+              if (!parsedGridLanesRules.has(el)) {
+                parsedGridLanesRules.set(el, props);
               }
             }
+          } catch (e) {
+            // Invalid selector, skip
           }
         }
-      } catch (e) {
-        // Cross-origin stylesheets will throw
-        console.warn(`${POLYFILL_NAME}: Could not access stylesheet:`, e);
       }
-    }
+    };
+    const handleRules = node => {
+      debugger;
+      // Node is one of: document, CSSStyleSheet, CSSImportRule
+      if ("styleSheet" in node){
+        node = node.styleSheet;
+      }
+      if ("cssRules" in node){
+        try {
+          const rules = node.cssRules || node.rules;
+          if (!rules) return;
 
+          for (const rule of rules) {
+            // Handle import rules
+            if (rule instanceof CSSImportRule){
+              handleRules(rule);
+            } else {
+              parseCSSRule(rule)
+            }
+          }
+        } catch (e) {
+          // Cross-origin stylesheets will throw
+          console.warn(`${POLYFILL_NAME}: Could not access stylesheet:`, e);
+        }
+      } else if ("styleSheets" in node){
+        for (const sheet of node.styleSheets){
+          handleRules(sheet);
+        }
+      }
+    };
+    handleRules(document);
     return containers;
   }
 
