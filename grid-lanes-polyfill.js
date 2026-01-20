@@ -979,11 +979,12 @@
     };
     const handleRules = node => {
       // Node is one of: document, CSSStyleSheet, CSSImportRule
-      if (node.styleSheet){
+      if ("styleSheet" in node){
         // Handle CSSImportRule
         node = node.styleSheet;
       }
-      if (node.cssRules || node.rules){
+      // Check using in, instead of truthy because accessing cssRules could cause an error (CORS)
+      if ("cssRules" in node || "rules" in node){
         // Handle CSS Stylesheet
         try {
           const rules = node.cssRules || node.rules;
@@ -1005,7 +1006,7 @@
           }
           // Cross-origin stylesheets will throw
         }
-      } else if (node.styleSheets){
+      } else if ("styleSheets" in node){
         // Handle document
         for (const sheet of node.styleSheets){
           handleRules(sheet);
