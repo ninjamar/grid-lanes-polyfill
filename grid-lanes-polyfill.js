@@ -26,7 +26,7 @@
  *    
  *      document.addEventListener("DOMContentLoaded", () => {
  *        if (!GridLanesPolyfill.supportsGridLanes()) {
-*           GridLanesPolyfill.init({ force: true });
+ *          GridLanesPolyfill.init({ force: true });
  *        }
  *      });
  *
@@ -35,9 +35,10 @@
  *
  *      --grid-lanes-polyfill: 1;
  *
- *    This is required because browsers strip unknown properties and values
- *    (including `display: grid-lanes`) during parsing unless a recognized
- *    custom property is present for the polyfill to hook into.
+ *.   This is required because browsers strip unknown properties and values
+ *    (including `display: grid-lanes`) during CSS parsing. The polyfill uses
+ *    this custom property as a hook to detect and process affected elements.
+ *
  *    
  *
  * @version 1.1.0
