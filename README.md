@@ -26,7 +26,13 @@ The following features are **not** supported:
 
 ## Usage
 
-### 1. Initialize the polyfill
+### 1. Load the polyfill
+```html
+<script src="grid-lanes-polyfill.js"></script>
+// OR
+<script src="https://cdn.jsdelivr.net/gh/ninjamar/grid-lanes-polyfill@1.1.0/grid-lanes-polyfill.js"></script>
+```
+### 2. Initialize the polyfill
 
 Run the polyfill after the DOM has loaded, and only when native support is missing:
 
@@ -38,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 ````
 
-### 2. Add the required custom property in CSS
+### 3. Add the required custom property in CSS
 
 For every element using `display: grid-lanes`, you **must** include the following custom property:
 
