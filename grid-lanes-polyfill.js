@@ -14,8 +14,35 @@
  * - Explicit placement (grid-column: N / M)
  * - Responsive auto-fill/auto-fit with minmax()
  * - Both waterfall (columns) and brick (rows) layouts
+ * 
+ * Features that do not work:
+ * - fr units with grid-template-rows
+ * 
+ * 
+ * Usage:
+ * 
+ * 1. Initialize the polyfill after DOM load and only if native support
+ *    is missing:
+ *    
+ *      document.addEventListener("DOMContentLoaded", () => {
+ *        if (!GridLanesPolyfill.supportsGridLanes()) {
+*           GridLanesPolyfill.init({ force: true });
+ *        }
+ *      });
  *
- * @version 1.0.0
+ * 2. In your CSS, you MUST include the following custom property on any
+ *    element using `display: grid-lanes`:
+ *
+ *      --grid-lanes-polyfill: 1;
+ *
+ *    This is required because browsers strip unknown properties and values
+ *    (including `display: grid-lanes`) during parsing unless a recognized
+ *    custom property is present for the polyfill to hook into.
+ *    
+ *
+ * @version 2.0.0
+ * @author Simon Willison
+ * @author ninjamar
  * @license MIT
  */
 
@@ -951,12 +978,13 @@
       }
     };
     const handleRules = node => {
-      debugger;
       // Node is one of: document, CSSStyleSheet, CSSImportRule
-      if ("styleSheet" in node){
+      if (node.styleSheet){
+        // Handle CSSImportRule
         node = node.styleSheet;
       }
-      if ("cssRules" in node){
+      if (node.cssRules || node.rules){
+        // Handle CSS Stylesheet
         try {
           const rules = node.cssRules || node.rules;
           if (!rules) return;
@@ -970,10 +998,15 @@
             }
           }
         } catch (e) {
+          if (e.code == 18 && e.name == "SecurityError"){
+            console.warn(`${POLYFILL_NAME}: Could not access cross-origin stylesheet:`, e);
+          } else {
+            console.error(`${POLYFILL_NAME}: Could not process stylesheet:`, e);
+          }
           // Cross-origin stylesheets will throw
-          console.warn(`${POLYFILL_NAME}: Could not access stylesheet:`, e);
         }
-      } else if ("styleSheets" in node){
+      } else if (node.styleSheets){
+        // Handle document
         for (const sheet of node.styleSheets){
           handleRules(sheet);
         }
