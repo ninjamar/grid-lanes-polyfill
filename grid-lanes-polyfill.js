@@ -331,9 +331,7 @@
 
     for (const lane of lanes) {
       if (typeof lane.max === "object" && lane.max.fr) {
-        lane.size = Math.max(lane.min, frUnit * lane.max.fr);
-      } else if (typeof lane.max === "number") {
-        lane.size = Math.min(lane.max, Math.max(lane.min, lane.min));
+        lane.size = lane.min + (frUnit * lane.max.fr);
       } else {
         lane.size = lane.min;
       }
