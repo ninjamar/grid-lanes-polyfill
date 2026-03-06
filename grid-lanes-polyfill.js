@@ -14,16 +14,16 @@
  * - Explicit placement (grid-column: N / M)
  * - Responsive auto-fill/auto-fit with minmax()
  * - Both waterfall (columns) and brick (rows) layouts
- * 
+ *
  * Features that do not work:
  * - fr units with grid-template-rows
- * 
- * 
+ *
+ *
  * Usage:
- * 
+ *
  * 1. Initialize the polyfill after DOM load and only if native support
  *    is missing:
- *    
+ *
  *      document.addEventListener("DOMContentLoaded", () => {
  *        if (!GridLanesPolyfill.supportsGridLanes()) {
  *          GridLanesPolyfill.init({ force: true });
@@ -39,7 +39,7 @@
  *    (including `display: grid-lanes`) during CSS parsing. The polyfill uses
  *    this custom property as a hook to detect and process affected elements.
  *
- *    
+ *
  *
  * @version 1.1.0
  * @author Simon Willison
@@ -67,12 +67,7 @@ function supportsGridLanes() {
 /**
  * Parse a CSS length value to pixels
  */
-function parseLengthToPixels(
-  value,
-  containerSize,
-  fontSize = 16,
-  rootFontSize = 16,
-) {
+function parseLengthToPixels(value, containerSize, fontSize = 16, rootFontSize = 16) {
   if (!value || value === "auto" || value === "none") return null;
 
   const num = parseFloat(value);
@@ -86,10 +81,8 @@ function parseLengthToPixels(
   if (value.endsWith("%")) return (num / 100) * containerSize;
   if (value.endsWith("vw")) return (num / 100) * window.innerWidth;
   if (value.endsWith("vh")) return (num / 100) * window.innerHeight;
-  if (value.endsWith("vmin"))
-    return (num / 100) * Math.min(window.innerWidth, window.innerHeight);
-  if (value.endsWith("vmax"))
-    return (num / 100) * Math.max(window.innerWidth, window.innerHeight);
+  if (value.endsWith("vmin")) return (num / 100) * Math.min(window.innerWidth, window.innerHeight);
+  if (value.endsWith("vmax")) return (num / 100) * Math.max(window.innerWidth, window.innerHeight);
   if (value.endsWith("fr")) return null; // Handled separately
 
   // Unitless number treated as pixels
@@ -125,13 +118,7 @@ function parseRepeat(value) {
 /**
  * Calculate lane sizes from grid-template-columns/rows
  */
-function calculateLaneSizes(
-  template,
-  containerSize,
-  gap,
-  fontSize,
-  rootFontSize,
-) {
+function calculateLaneSizes(template, containerSize, gap, fontSize, rootFontSize) {
   if (!template || template === "none" || template === "auto") {
     return null;
   }
@@ -159,16 +146,8 @@ function calculateLaneSizes(
         for (const pt of patternTokens) {
           const minmax = parseMinMax(pt);
           if (minmax) {
-            const minVal = parseLengthToPixels(
-              minmax.min,
-              containerSize,
-              fontSize,
-              rootFontSize,
-            );
-            if (
-              minmax.min === "max-content" ||
-              minmax.min === "min-content"
-            ) {
+            const minVal = parseLengthToPixels(minmax.min, containerSize, fontSize, rootFontSize);
+            if (minmax.min === "max-content" || minmax.min === "min-content") {
               minSize += 100; // Fallback estimate
             } else if (minVal !== null) {
               minSize += minVal;
@@ -177,12 +156,7 @@ function calculateLaneSizes(
               hasFlexible = true;
             }
           } else {
-            const size = parseLengthToPixels(
-              pt,
-              containerSize,
-              fontSize,
-              rootFontSize,
-            );
+            const size = parseLengthToPixels(pt, containerSize, fontSize, rootFontSize);
             if (size !== null) {
               minSize += size;
             } else if (pt.endsWith("fr")) {
@@ -197,30 +171,17 @@ function calculateLaneSizes(
         const gapCount = patternCount - 1;
         const minPatternSize = minSize + gapCount * gap;
 
-        let reps = Math.max(
-          1,
-          Math.floor((availableSpace + gap) / (minPatternSize + gap)),
-        );
+        let reps = Math.max(1, Math.floor((availableSpace + gap) / (minPatternSize + gap)));
 
         // Expand pattern
         for (let i = 0; i < reps; i++) {
           for (const pt of patternTokens) {
             const minmax = parseMinMax(pt);
             if (minmax) {
-              const minVal = parseLengthToPixels(
-                minmax.min,
-                containerSize,
-                fontSize,
-                rootFontSize,
-              );
+              const minVal = parseLengthToPixels(minmax.min, containerSize, fontSize, rootFontSize);
               const maxVal = minmax.max.endsWith("fr")
                 ? { fr: parseFloat(minmax.max) }
-                : parseLengthToPixels(
-                    minmax.max,
-                    containerSize,
-                    fontSize,
-                    rootFontSize,
-                  );
+                : parseLengthToPixels(minmax.max, containerSize, fontSize, rootFontSize);
 
               lanes.push({
                 min: minVal || 0,
@@ -237,13 +198,7 @@ function calculateLaneSizes(
               lanes.push({ min: 0, max: { fr }, size: 0 });
               totalFr += fr;
             } else {
-              const size =
-                parseLengthToPixels(
-                  pt,
-                  containerSize,
-                  fontSize,
-                  rootFontSize,
-                ) || 0;
+              const size = parseLengthToPixels(pt, containerSize, fontSize, rootFontSize) || 0;
               lanes.push({ min: size, max: size, size });
               fixedSpace += size;
             }
@@ -254,12 +209,7 @@ function calculateLaneSizes(
         const reps = parseInt(count, 10);
         for (let i = 0; i < reps; i++) {
           for (const pt of patternTokens) {
-            const size = parseLengthToPixels(
-              pt,
-              containerSize,
-              fontSize,
-              rootFontSize,
-            );
+            const size = parseLengthToPixels(pt, containerSize, fontSize, rootFontSize);
             if (pt.endsWith("fr")) {
               const fr = parseFloat(pt);
               lanes.push({ min: 0, max: { fr }, size: 0 });
@@ -277,20 +227,10 @@ function calculateLaneSizes(
     // Handle minmax()
     const minmax = parseMinMax(token);
     if (minmax) {
-      const minVal = parseLengthToPixels(
-        minmax.min,
-        containerSize,
-        fontSize,
-        rootFontSize,
-      );
+      const minVal = parseLengthToPixels(minmax.min, containerSize, fontSize, rootFontSize);
       const maxVal = minmax.max.endsWith("fr")
         ? { fr: parseFloat(minmax.max) }
-        : parseLengthToPixels(
-            minmax.max,
-            containerSize,
-            fontSize,
-            rootFontSize,
-          );
+        : parseLengthToPixels(minmax.max, containerSize, fontSize, rootFontSize);
 
       lanes.push({ min: minVal || 0, max: maxVal, size: 0 });
       if (typeof maxVal === "object" && maxVal.fr) {
@@ -309,12 +249,7 @@ function calculateLaneSizes(
     }
 
     // Handle fixed sizes
-    const size = parseLengthToPixels(
-      token,
-      containerSize,
-      fontSize,
-      rootFontSize,
-    );
+    const size = parseLengthToPixels(token, containerSize, fontSize, rootFontSize);
     if (size !== null) {
       lanes.push({ min: size, max: size, size });
       fixedSpace += size;
@@ -379,22 +314,15 @@ function tokenizeTemplate(template) {
 function getGridLanesStyles(element) {
   const computed = window.getComputedStyle(element);
   const fontSize = parseFloat(computed.fontSize) || 16;
-  const rootFontSize =
-    parseFloat(window.getComputedStyle(document.documentElement).fontSize) ||
-    16;
+  const rootFontSize = parseFloat(window.getComputedStyle(document.documentElement).fontSize) || 16;
 
   // Get parsed CSS rules for this element (from raw CSS parsing)
   const parsedRules = parsedGridLanesRules.get(element) || {};
 
   // Get gap values - prefer parsed rules, fall back to computed
   let gap = parsedRules["gap"] || computed.gap || computed.gridGap || "0px";
-  let columnGap =
-    parsedRules["column-gap"] ||
-    computed.columnGap ||
-    computed.gridColumnGap ||
-    gap;
-  let rowGap =
-    parsedRules["row-gap"] || computed.rowGap || computed.gridRowGap || gap;
+  let columnGap = parsedRules["column-gap"] || computed.columnGap || computed.gridColumnGap || gap;
+  let rowGap = parsedRules["row-gap"] || computed.rowGap || computed.gridRowGap || gap;
 
   // Handle combined gap values like "24px 16px"
   if (gap.includes(" ")) {
@@ -410,38 +338,19 @@ function getGridLanesStyles(element) {
     computed.getPropertyValue("--item-tolerance").trim() ||
     computed.getPropertyValue("item-tolerance").trim();
   if (toleranceValue) {
-    const parsed = parseLengthToPixels(
-      toleranceValue,
-      0,
-      fontSize,
-      rootFontSize,
-    );
+    const parsed = parseLengthToPixels(toleranceValue, 0, fontSize, rootFontSize);
     if (parsed !== null) tolerance = parsed;
   }
 
   // Get grid template - prefer parsed rules since computed styles won't work for non-grid elements
-  const gridTemplateColumns =
-    parsedRules["grid-template-columns"] || computed.gridTemplateColumns;
-  const gridTemplateRows =
-    parsedRules["grid-template-rows"] || computed.gridTemplateRows;
+  const gridTemplateColumns = parsedRules["grid-template-columns"] || computed.gridTemplateColumns;
+  const gridTemplateRows = parsedRules["grid-template-rows"] || computed.gridTemplateRows;
 
   return {
     gridTemplateColumns,
     gridTemplateRows,
-    columnGap:
-      parseLengthToPixels(
-        String(columnGap).split(" ")[0],
-        0,
-        fontSize,
-        rootFontSize,
-      ) || 0,
-    rowGap:
-      parseLengthToPixels(
-        String(rowGap).split(" ")[0],
-        0,
-        fontSize,
-        rootFontSize,
-      ) || 0,
+    columnGap: parseLengthToPixels(String(columnGap).split(" ")[0], 0, fontSize, rootFontSize) || 0,
+    rowGap: parseLengthToPixels(String(rowGap).split(" ")[0], 0, fontSize, rootFontSize) || 0,
     fontSize,
     rootFontSize,
     tolerance,
@@ -556,10 +465,7 @@ class GridLanesLayout {
     this.resizeObserver = new ResizeObserver((entries) => {
       // Check if it's the container or a child that resized
       for (const entry of entries) {
-        if (
-          entry.target === this.container ||
-          entry.target.parentElement === this.container
-        ) {
+        if (entry.target === this.container || entry.target.parentElement === this.container) {
           debouncedLayout();
           break;
         }
@@ -588,10 +494,7 @@ class GridLanesLayout {
             }
           }
           shouldRelayout = true;
-        } else if (
-          mutation.type === "attributes" &&
-          mutation.attributeName === "style"
-        ) {
+        } else if (mutation.type === "attributes" && mutation.attributeName === "style") {
           shouldRelayout = true;
         }
       }
@@ -660,9 +563,7 @@ class GridLanesLayout {
 
     // Get all direct children
     const items = Array.from(this.container.children).filter(
-      (el) =>
-        el.nodeType === Node.ELEMENT_NODE &&
-        window.getComputedStyle(el).display !== "none",
+      (el) => el.nodeType === Node.ELEMENT_NODE && window.getComputedStyle(el).display !== "none",
     );
 
     // Separate explicitly placed items from auto-placed items
@@ -696,12 +597,8 @@ class GridLanesLayout {
   }
 
   placeExplicitItem(element, itemStyles, containerStyles) {
-    const gap = this.isVertical
-      ? containerStyles.columnGap
-      : containerStyles.rowGap;
-    const crossGap = this.isVertical
-      ? containerStyles.rowGap
-      : containerStyles.columnGap;
+    const gap = this.isVertical ? containerStyles.columnGap : containerStyles.rowGap;
+    const crossGap = this.isVertical ? containerStyles.rowGap : containerStyles.columnGap;
 
     let laneIndex;
     let span;
@@ -769,12 +666,8 @@ class GridLanesLayout {
   }
 
   placeAutoItem(element, itemStyles, containerStyles) {
-    const gap = this.isVertical
-      ? containerStyles.columnGap
-      : containerStyles.rowGap;
-    const crossGap = this.isVertical
-      ? containerStyles.rowGap
-      : containerStyles.columnGap;
+    const gap = this.isVertical ? containerStyles.columnGap : containerStyles.rowGap;
+    const crossGap = this.isVertical ? containerStyles.rowGap : containerStyles.columnGap;
     const tolerance = containerStyles.tolerance;
     const span = this.isVertical ? itemStyles.columnSpan : itemStyles.rowSpan;
 
@@ -793,10 +686,7 @@ class GridLanesLayout {
       if (bestHeight - maxHeight > tolerance) {
         bestHeight = maxHeight;
         bestLane = i;
-      } else if (
-        Math.abs(maxHeight - bestHeight) <= tolerance &&
-        i < bestLane
-      ) {
+      } else if (Math.abs(maxHeight - bestHeight) <= tolerance && i < bestLane) {
         // Within tolerance, prefer earlier lane for reading order
         bestHeight = maxHeight;
         bestLane = i;
@@ -888,20 +778,21 @@ function parseCSSProperties(cssBlock) {
 
 const styleMap = new WeakMap(); // catch is reserved
 
-function catchedGetComputedStyle(elem, useCatch = true){ // useCatch defaults to true
-  if (useCatch && styleMap.has(elem)){
+function catchedGetComputedStyle(elem, useCatch = true) {
+  // useCatch defaults to true
+  if (useCatch && styleMap.has(elem)) {
     return styleMap.get(elem);
   }
   const style = window.getComputedStyle(elem);
   styleMap.set(elem, style);
   return style;
 }
-function removeCachedStyle(elem){
+function removeCachedStyle(elem) {
   styleMap.delete(elem);
 }
 
-function hasGridLanesProperty(elem){
-  return catchedGetComputedStyle(elem).getPropertyValue("--grid-lanes-polyfill").trim() === '1';
+function hasGridLanesProperty(elem) {
+  return catchedGetComputedStyle(elem).getPropertyValue("--grid-lanes-polyfill").trim() === "1";
 }
 /**
  * Finds all elements with --grid-lanes-polyfill down to the granular level.
@@ -909,29 +800,30 @@ function hasGridLanesProperty(elem){
  * have nested grid-lanes with this approach because a custom property is
  * applied to all elements.
  */
-function findElements(root = document.body){ // Worst case time complexity: O(n)
+function findElements(root = document.body) {
+  // Worst case time complexity: O(n)
   const results = [];
   let walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
 
   let node = walker.currentNode;
-  while (node){
-      if (hasGridLanesProperty(node)){
-          results.push(node);
-          // there isn't always a next sibling, so we can't set the currentNode after calling nextSibling
-          walker.currentNode = node; 
-          node = walker.nextSibling(); 
-      } else {
-          node = walker.nextNode()
-      }
+  while (node) {
+    if (hasGridLanesProperty(node)) {
+      results.push(node);
+      // there isn't always a next sibling, so we can't set the currentNode after calling nextSibling
+      walker.currentNode = node;
+      node = walker.nextSibling();
+    } else {
+      node = walker.nextNode();
+    }
   }
   return results;
 }
 // process a subtree added to the dom
-function processSubtree(root, instances, options){
+function processSubtree(root, instances, options) {
   const containers = findElements(root);
-  for (const container of containers){
-    if (!instances.has(container) && !container.hasAttribute(POLYFILL_ATTR)){
-      instances.set(container, new GridLanesLayout(container, options))
+  for (const container of containers) {
+    if (!instances.has(container) && !container.hasAttribute(POLYFILL_ATTR)) {
+      instances.set(container, new GridLanesLayout(container, options));
     }
   }
 }
@@ -941,9 +833,7 @@ function processSubtree(root, instances, options){
 function init(options = {}) {
   // Check if native support exists
   if (supportsGridLanes() && !options.force) {
-    console.log(
-      `${POLYFILL_NAME}: Native support detected, polyfill not needed.`,
-    );
+    console.log(`${POLYFILL_NAME}: Native support detected, polyfill not needed.`);
     return { supported: true, instances: [] };
   }
 
@@ -993,22 +883,21 @@ function init(options = {}) {
         }
       }
 
-      if (mutation.type === "childList"){
-        for (const node of mutation.addedNodes){
+      if (mutation.type === "childList") {
+        for (const node of mutation.addedNodes) {
           if (node.nodeType === node.ELEMENT_NODE) continue;
 
           processSubtree(node, instances, options);
         }
-        for (const node of mutation.removedNodes){
+        for (const node of mutation.removedNodes) {
           if (node.nodeType === node.ELEMENT_NODE) continue;
-          if (instances.has(node)){
+          if (instances.has(node)) {
             instances.get(node).destroy(); // destroy grid lanes
             instances.delete(node);
           }
           styleMap.delete(node);
         }
       }
-
     }
   });
 
@@ -1016,13 +905,10 @@ function init(options = {}) {
     childList: true,
     subtree: true,
     attributes: true,
-    attributeFilter: ["style", "class"]
+    attributeFilter: ["style", "class"],
   });
-  
 
-  console.log(
-    `${POLYFILL_NAME}: Initialized, ${instances.size} container(s) found.`,
-  );
+  console.log(`${POLYFILL_NAME}: Initialized, ${instances.size} container(s) found.`);
 
   return {
     supported: false,

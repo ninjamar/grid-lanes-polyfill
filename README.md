@@ -8,6 +8,7 @@ https://webkit.org/blog/17660/introducing-css-grid-lanes/
 Originally written by Simon Willison, this edition features numerous enhancements to make the original work properly.
 
 ## Supported Features
+
 - Inline stylesheets, `script` element, imported stylesheets
 - `display: grid-lanes`
 - `grid-template-columns` / `grid-template-rows` for lane definition
@@ -69,7 +70,6 @@ For every element using `display: grid-lanes`, you **must** include the followin
 
 This is required because browsers strip unknown properties and values (including `display: grid-lanes`) during CSS parsing. The polyfill uses this custom property as a hook to detect and process affected elements.
 
-
 > [!NOTE]
 > The script parses CSS in many ways. Inline styles and root stylesheets may be parsed "as is", meaning that this custom property technically is not always needed. However, this is subject to change, so it is important to include it.
 
@@ -79,11 +79,11 @@ This is required because browsers strip unknown properties and values (including
 
 ## Authors
 
-* Simon Willison
-* ninjamar
+- Simon Willison
+- ninjamar
 
 ## License
 
->MIT
+> MIT
 
 Other files in this repository may be distributed under different licenses. Please check the license header or accompanying license file in each individual file for its specific terms.
