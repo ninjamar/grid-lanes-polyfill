@@ -18,34 +18,15 @@
  * Features that do not work:
  * - fr units with grid-template-rows
  *
- *
- * Usage:
- *
- * 1. Initialize the polyfill after DOM load and only if native support
- *    is missing:
- *
- *      document.addEventListener("DOMContentLoaded", () => {
- *        if (!GridLanesPolyfill.supportsGridLanes()) {
- *          GridLanesPolyfill.init({ force: true });
- *        }
- *      });
- *
- * 2. In your CSS, you MUST include the following custom property on any
- *    element using `display: grid-lanes`:
- *
- *      --grid-lanes-polyfill: 1;
- *
- *.   This is required because browsers strip unknown properties and values
- *    (including `display: grid-lanes`) during CSS parsing. The polyfill uses
- *    this custom property as a hook to detect and process affected elements.
- *
- *
- *
  * @version 1.1.0
  * @author Simon Willison
  * @author ninjamar
  * @license MIT
  */
+
+// ============================================================================
+// CONSTANTS & STATE
+// ============================================================================
 
 const POLYFILL_NAME = "GridLanesPolyfill";
 const POLYFILL_ATTR = "data-grid-lanes-polyfilled";
@@ -53,6 +34,13 @@ const DEFAULT_TOLERANCE = 16; // ~1em in pixels
 
 // Store parsed CSS rules for grid-lanes containers
 const parsedGridLanesRules = new Map();
+
+// Cache computed styles to reduce redundant calls
+const styleMap = new WeakMap();
+
+// ============================================================================
+// FEATURE DETECTION
+// ============================================================================
 
 /**
  * Check if the browser natively supports display: grid-lanes
@@ -63,6 +51,10 @@ function supportsGridLanes() {
   }
   return CSS.supports("display", "grid-lanes");
 }
+
+// ============================================================================
+// PARSING UTILITIES
+// ============================================================================
 
 /**
  * Parse a CSS length value to pixels
@@ -113,6 +105,40 @@ function parseRepeat(value) {
     count: match[1].trim(),
     pattern: match[2].trim(),
   };
+}
+
+/**
+ * Tokenize a grid template string
+ */
+function tokenizeTemplate(template) {
+  const tokens = [];
+  let current = "";
+  let parenDepth = 0;
+
+  for (let i = 0; i < template.length; i++) {
+    const char = template[i];
+
+    if (char === "(") {
+      parenDepth++;
+      current += char;
+    } else if (char === ")") {
+      parenDepth--;
+      current += char;
+    } else if (char === " " && parenDepth === 0) {
+      if (current.trim()) {
+        tokens.push(current.trim());
+      }
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+
+  if (current.trim()) {
+    tokens.push(current.trim());
+  }
+
+  return tokens;
 }
 
 /**
@@ -274,39 +300,9 @@ function calculateLaneSizes(template, containerSize, gap, fontSize, rootFontSize
   return lanes.map((l) => l.size);
 }
 
-/**
- * Tokenize a grid template string
- */
-function tokenizeTemplate(template) {
-  const tokens = [];
-  let current = "";
-  let parenDepth = 0;
-
-  for (let i = 0; i < template.length; i++) {
-    const char = template[i];
-
-    if (char === "(") {
-      parenDepth++;
-      current += char;
-    } else if (char === ")") {
-      parenDepth--;
-      current += char;
-    } else if (char === " " && parenDepth === 0) {
-      if (current.trim()) {
-        tokens.push(current.trim());
-      }
-      current = "";
-    } else {
-      current += char;
-    }
-  }
-
-  if (current.trim()) {
-    tokens.push(current.trim());
-  }
-
-  return tokens;
-}
+// ============================================================================
+// STYLE & ITEM UTILITIES
+// ============================================================================
 
 /**
  * Get computed styles for grid-lanes properties
@@ -421,6 +417,78 @@ function getItemStyles(element) {
     rowEnd,
   };
 }
+
+// ============================================================================
+// STYLE CACHE MANAGEMENT
+// ============================================================================
+
+/**
+ * Get computed style with caching to reduce redundant calls
+ */
+function catchedGetComputedStyle(elem, useCatch = true) {
+  if (useCatch && styleMap.has(elem)) {
+    return styleMap.get(elem);
+  }
+  const style = window.getComputedStyle(elem);
+  styleMap.set(elem, style);
+  return style;
+}
+
+/**
+ * Clear cached style for an element
+ */
+function removeCachedStyle(elem) {
+  styleMap.delete(elem);
+}
+
+// ============================================================================
+// DOM UTILITIES
+// ============================================================================
+
+/**
+ * Check if element has the grid-lanes polyfill marker
+ */
+function hasGridLanesProperty(elem) {
+  return catchedGetComputedStyle(elem).getPropertyValue("--grid-lanes-polyfill").trim() === "1";
+}
+
+/**
+ * Find all elements with --grid-lanes-polyfill down to the granular level.
+ * Prefers children over parent elements. Note: nested grid-lanes are not
+ * supported because the custom property cascades to all descendants.
+ */
+function findElements(root = document.body) {
+  const results = [];
+  let walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+
+  let node = walker.currentNode;
+  while (node) {
+    if (hasGridLanesProperty(node)) {
+      results.push(node);
+      walker.currentNode = node;
+      node = walker.nextSibling();
+    } else {
+      node = walker.nextNode();
+    }
+  }
+  return results;
+}
+
+/**
+ * Process a subtree for grid-lanes containers
+ */
+function processSubtree(root, instances, options) {
+  const containers = findElements(root);
+  for (const container of containers) {
+    if (!instances.has(container) && !container.hasAttribute(POLYFILL_ATTR)) {
+      instances.set(container, new GridLanesLayout(container, options));
+    }
+  }
+}
+
+// ============================================================================
+// GRID LANES LAYOUT CLASS
+// ============================================================================
 
 /**
  * Main Grid Lanes layout class
@@ -762,73 +830,12 @@ class GridLanesLayout {
   }
 }
 
+// ============================================================================
+// PUBLIC API
+// ============================================================================
+
 /**
- * Parse CSS properties from a CSS block text
- */
-function parseCSSProperties(cssBlock) {
-  const props = {};
-  // Extract property: value pairs
-  const propRegex = /([\w-]+)\s*:\s*([^;]+);?/g;
-  let match;
-  while ((match = propRegex.exec(cssBlock)) !== null) {
-    props[match[1].trim()] = match[2].trim();
-  }
-  return props;
-}
-
-const styleMap = new WeakMap(); // catch is reserved
-
-function catchedGetComputedStyle(elem, useCatch = true) {
-  // useCatch defaults to true
-  if (useCatch && styleMap.has(elem)) {
-    return styleMap.get(elem);
-  }
-  const style = window.getComputedStyle(elem);
-  styleMap.set(elem, style);
-  return style;
-}
-function removeCachedStyle(elem) {
-  styleMap.delete(elem);
-}
-
-function hasGridLanesProperty(elem) {
-  return catchedGetComputedStyle(elem).getPropertyValue("--grid-lanes-polyfill").trim() === "1";
-}
-/**
- * Finds all elements with --grid-lanes-polyfill down to the granular level.
- * Prefers children over parent elements. As a side note, this means you can't
- * have nested grid-lanes with this approach because a custom property is
- * applied to all elements.
- */
-function findElements(root = document.body) {
-  // Worst case time complexity: O(n)
-  const results = [];
-  let walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
-
-  let node = walker.currentNode;
-  while (node) {
-    if (hasGridLanesProperty(node)) {
-      results.push(node);
-      // there isn't always a next sibling, so we can't set the currentNode after calling nextSibling
-      walker.currentNode = node;
-      node = walker.nextSibling();
-    } else {
-      node = walker.nextNode();
-    }
-  }
-  return results;
-}
-// process a subtree added to the dom
-function processSubtree(root, instances, options) {
-  const containers = findElements(root);
-  for (const container of containers) {
-    if (!instances.has(container) && !container.hasAttribute(POLYFILL_ATTR)) {
-      instances.set(container, new GridLanesLayout(container, options));
-    }
-  }
-}
-/**
- * Initialize the polyfill
+ * Initialize the polyfill on all grid-lanes elements in the document
  */
 function init(options = {}) {
   // Check if native support exists
@@ -840,7 +847,6 @@ function init(options = {}) {
   const instances = new Map();
 
   // Process existing containers
-  //const containers = processStyleSheets();
   const containers = findElements();
 
   for (const container of containers) {
@@ -848,7 +854,6 @@ function init(options = {}) {
       instances.set(container, new GridLanesLayout(container, options));
     }
   }
-  // TODO: Using a mutation observer, traverse elements in an inexpensive way (if an element is the one changed, fetch a new stylesheet, else, use a cateched one)
 
   // Watch for new stylesheets and elements
   // Debounce for ancestor attribute changes to avoid excessive relayouts
@@ -892,7 +897,7 @@ function init(options = {}) {
         for (const node of mutation.removedNodes) {
           if (node.nodeType === node.ELEMENT_NODE) continue;
           if (instances.has(node)) {
-            instances.get(node).destroy(); // destroy grid lanes
+            instances.get(node).destroy();
             instances.delete(node);
           }
           styleMap.delete(node);
@@ -931,7 +936,7 @@ function init(options = {}) {
 }
 
 /**
- * Apply to a specific element
+ * Apply layout to a specific element
  */
 function apply(element, options = {}) {
   if (supportsGridLanes() && !options.force) {
@@ -940,10 +945,12 @@ function apply(element, options = {}) {
   return new GridLanesLayout(element, options);
 }
 
-// Export named exports for named import usage
+// ============================================================================
+// EXPORTS
+// ============================================================================
+
 export { supportsGridLanes, init, apply, GridLanesLayout };
 
-// Export default object with full API
 export default {
   supportsGridLanes,
   init,
