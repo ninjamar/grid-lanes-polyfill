@@ -167,7 +167,6 @@ function calculateLaneSizes(template, containerSize, gap, fontSize, rootFontSize
       if (count === "auto-fill" || count === "auto-fit") {
         // Calculate how many repetitions fit
         let minSize = 0;
-        let hasFlexible = false;
 
         for (const pt of patternTokens) {
           const minmax = parseMinMax(pt);
@@ -178,15 +177,11 @@ function calculateLaneSizes(template, containerSize, gap, fontSize, rootFontSize
             } else if (minVal !== null) {
               minSize += minVal;
             }
-            if (minmax.max.endsWith("fr")) {
-              hasFlexible = true;
-            }
           } else {
             const size = parseLengthToPixels(pt, containerSize, fontSize, rootFontSize);
             if (size !== null) {
               minSize += size;
             } else if (pt.endsWith("fr")) {
-              hasFlexible = true;
               minSize += 100; // Minimum fallback for fr units
             }
           }
@@ -754,7 +749,7 @@ class GridLanesLayout {
       if (bestHeight - maxHeight > tolerance) {
         bestHeight = maxHeight;
         bestLane = i;
-      } else if (Math.abs(maxHeight - bestHeight) <= tolerance && i < bestLane) {
+      } else if (Math.abs(maxHeight - bestHeight) <= tolerance /*&& i < bestLane /*-- Removed because it doesn't seem like this is called*/) {
         // Within tolerance, prefer earlier lane for reading order
         bestHeight = maxHeight;
         bestLane = i;
@@ -890,12 +885,12 @@ function init(options = {}) {
 
       if (mutation.type === "childList") {
         for (const node of mutation.addedNodes) {
-          if (node.nodeType === node.ELEMENT_NODE) continue;
+          if (node.nodeType !== node.ELEMENT_NODE) continue;
 
           processSubtree(node, instances, options);
         }
         for (const node of mutation.removedNodes) {
-          if (node.nodeType === node.ELEMENT_NODE) continue;
+          if (node.nodeType !== node.ELEMENT_NODE) continue;
           if (instances.has(node)) {
             instances.get(node).destroy();
             instances.delete(node);
