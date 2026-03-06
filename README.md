@@ -26,25 +26,37 @@ The following features are **not** supported:
 
 ## Usage
 
-### 1. Load the polyfill
-```html
-<script src="grid-lanes-polyfill.js"></script>
-// OR
-<script src="https://cdn.jsdelivr.net/gh/ninjamar/grid-lanes-polyfill@1.1.0/grid-lanes-polyfill.js"></script>
-```
-### 2. Initialize the polyfill
+### 1. Load and Initialize the polyfill
 
-Run the polyfill after the DOM has loaded, and only when native support is missing:
+Use ES6 modules to load and initialize the polyfill:
+
+```html
+<script type="module">
+  import GridLanesPolyfill from "./grid-lanes-polyfill.js";
+  // OR with named imports:
+  // import { supportsGridLanes, init } from "./grid-lanes-polyfill.js";
+
+  document.addEventListener("DOMContentLoaded", () => {
+    if (!GridLanesPolyfill.supportsGridLanes()) {
+      GridLanesPolyfill.init({ force: true });
+    }
+  });
+</script>
+```
+
+Alternatively, use named imports:
 
 ```js
+import { supportsGridLanes, init } from "./grid-lanes-polyfill.js";
+
 document.addEventListener("DOMContentLoaded", () => {
-  if (!GridLanesPolyfill.supportsGridLanes()) {
-    GridLanesPolyfill.init({ force: true });
+  if (!supportsGridLanes()) {
+    init({ force: true });
   }
 });
-````
+```
 
-### 3. Add the required custom property in CSS
+### 2. Add the required custom property in CSS
 
 For every element using `display: grid-lanes`, you **must** include the following custom property:
 
