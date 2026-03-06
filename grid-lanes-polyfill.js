@@ -889,135 +889,55 @@
     return props;
   }
 
-  /**
-   * Find and process all grid-lanes containers
-   */
-  function processStyleSheets() {
-    const containers = new Set();
-    const gridLanesSelectors = new Set();
+  const styleMap = new WeakMap(); // catch is reserved
 
-    // Check inline styles (look at the raw style attribute)
-    const allElements = document.querySelectorAll('[style*="grid-lanes"]');
-    for (const el of allElements) {
-      const styleAttr = el.getAttribute("style") || "";
-      if (/display\s*:\s*grid-lanes/i.test(styleAttr)) {
-        containers.add(el);
-        // Parse and store inline style properties
-        const props = parseCSSProperties(styleAttr);
-        if (!parsedGridLanesRules.has(el)) {
-          parsedGridLanesRules.set(el, props);
-        }
-      }
+  function catchedGetComputedStyle(elem, useCatch = true){ // useCatch defaults to true
+    if (useCatch && styleMap.has(elem)){
+      return styleMap.get(elem);
     }
-
-    // TODO: Remove because the code to parse stylesheets can do this better
-    // Check style elements directly and parse raw CSS
-    const styleElements = document.querySelectorAll("style");
-    for (const styleEl of styleElements) {
-      const cssText = styleEl.textContent || "";
-      // Match selectors with display: grid-lanes and capture the full block
-      const regex = /([^{}]+)\{([^}]*display\s*:\s*grid-lanes[^}]*)\}/gi;
-      let match;
-      while ((match = regex.exec(cssText)) !== null) {
-        const selectorText = match[1].trim();
-        const cssBlock = match[2];
-
-        // Handle comma-separated selectors
-        const selectors = selectorText.split(",").map((s) => s.trim());
-
-        for (const selector of selectors) {
-          if (!selector) continue;
-          gridLanesSelectors.add(selector);
-
-          // Parse properties from the CSS block
-          const props = parseCSSProperties(cssBlock);
-
-          try {
-            const elements = document.querySelectorAll(selector);
-            for (const el of elements) {
-              containers.add(el);
-              // Store parsed rules for this element (merge if exists)
-              if (parsedGridLanesRules.has(el)) {
-                Object.assign(parsedGridLanesRules.get(el), props);
-              } else {
-                parsedGridLanesRules.set(el, { ...props });
-              }
-            }
-          } catch (e) {
-            // Invalid selector, skip
-          }
-        }
-      }
-    }
-
-
-    // Also check stylesheet rules (may work for some browsers)
-
-    const parseCSSRule = rule => {
-      if (rule.cssText && (
-          /display\s*:\s*grid-lanes/i.test(rule.cssText) ||
-          /--grid-lanes-polyfill:\s*1/i.test(rule.cssText) // This check is needed because some browsers strip display: grid-lanes as they think it is invalid
-        )) {
-        if (
-          rule.selectorText &&
-          !gridLanesSelectors.has(rule.selectorText)
-        ) {
-          gridLanesSelectors.add(rule.selectorText);
-          const props = parseCSSProperties(rule.cssText);
-          try {
-            const elements = document.querySelectorAll(rule.selectorText);
-            for (const el of elements) {
-              containers.add(el);
-              if (!parsedGridLanesRules.has(el)) {
-                parsedGridLanesRules.set(el, props);
-              }
-            }
-          } catch (e) {
-            // Invalid selector, skip
-          }
-        }
-      }
-    };
-    const handleRules = node => {
-      // Node is one of: document, CSSStyleSheet, CSSImportRule
-      if ("styleSheet" in node){
-        // Handle CSSImportRule
-        node = node.styleSheet;
-      }
-      // Check using in, instead of truthy because accessing cssRules could cause an error (CORS)
-      if ("cssRules" in node || "rules" in node){
-        // Handle CSS Stylesheet
-        try {
-          const rules = node.cssRules || node.rules;
-          if (!rules) return;
-
-          for (const rule of rules) {
-            // Handle import rules
-            if (rule instanceof CSSImportRule){
-              handleRules(rule);
-            } else {
-              parseCSSRule(rule)
-            }
-          }
-        } catch (e) {
-          if (e.code == 18 && e.name == "SecurityError"){
-            console.warn(`${POLYFILL_NAME}: Could not access cross-origin stylesheet:`, e);
-          } else {
-            console.error(`${POLYFILL_NAME}: Could not process stylesheet:`, e);
-          }
-          // Cross-origin stylesheets will throw
-        }
-      } else if ("styleSheets" in node){
-        // Handle document
-        for (const sheet of node.styleSheets){
-          handleRules(sheet);
-        }
-      }
-    };
-    handleRules(document);
-    return containers;
+    const style = window.getComputedStyle(elem);
+    styleMap.set(elem, style);
+    return style;
+  }
+  function removeCachedStyle(elem){
+    styleMap.delete(elem);
   }
 
+  function hasGridLanesProperty(elem){
+    return catchedGetComputedStyle(elem).getPropertyValue("--grid-lanes-polyfill").trim() === '1';
+  }
+  /**
+   * Finds all elements with --grid-lanes-polyfill down to the granular level.
+   * Prefers children over parent elements. As a side note, this means you can't
+   * have nested grid-lanes with this approach because a custom property is
+   * applied to all elements.
+   */
+  function findElements(root = document.body){ // Worst case time complexity: O(n)
+    const results = [];
+    let walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+
+    let node = walker.currentNode;
+    while (node){
+        if (hasGridLanesProperty(node)){
+            results.push(node);
+            // there isn't always a next sibling, so we can't set the currentNode after calling nextSibling
+            walker.currentNode = node; 
+            node = walker.nextSibling(); 
+        } else {
+            node = walker.nextNode()
+        }
+    }
+    return results;
+  }
+  // process a subtree added to the dom
+  function processSubtree(root, instances, options){
+    const containers = findElements(root);
+    for (const container of containers){
+      if (!instances.has(container) && !container.hasAttribute(POLYFILL_ATTR)){
+        instances.set(container, new GridLanesLayout(container, options))
+      }
+    }
+  }
   /**
    * Initialize the polyfill
    */
@@ -1033,62 +953,75 @@
     const instances = new Map();
 
     // Process existing containers
-    const containers = processStyleSheets();
+    //const containers = processStyleSheets();
+    const containers = findElements();
+
     for (const container of containers) {
       if (!container.hasAttribute(POLYFILL_ATTR)) {
         instances.set(container, new GridLanesLayout(container, options));
       }
     }
+    // TODO: Using a mutation observer, traverse elements in an inexpensive way (if an element is the one changed, fetch a new stylesheet, else, use a cateched one)
 
     // Watch for new stylesheets and elements
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        // Check for new style elements
-        if (mutation.type === "childList") {
-          for (const node of mutation.addedNodes) {
-            if (node.nodeType === Node.ELEMENT_NODE) {
-              // Check if the added element is a grid-lanes container
-              const style = window.getComputedStyle(node);
-              if (
-                node.style.display === "grid-lanes" ||
-                style.getPropertyValue("display") === "grid-lanes"
-              ) {
-                if (!instances.has(node)) {
-                  instances.set(node, new GridLanesLayout(node, options));
-                }
-              }
-
-              // Check descendants
-              const descendants = node.querySelectorAll("*");
-              for (const desc of descendants) {
-                const descStyle = window.getComputedStyle(desc);
-                if (
-                  desc.style.display === "grid-lanes" ||
-                  descStyle.getPropertyValue("display") === "grid-lanes"
-                ) {
-                  if (!instances.has(desc)) {
-                    instances.set(desc, new GridLanesLayout(desc, options));
-                  }
-                }
-              }
-            }
+    // Debounce for ancestor attribute changes to avoid excessive relayouts
+    let ancestorLayoutTimeout = null;
+    const pendingAncestorInstances = new Map();
+    const debouncedRelayoutAll = () => {
+      if (ancestorLayoutTimeout) clearTimeout(ancestorLayoutTimeout);
+      ancestorLayoutTimeout = setTimeout(() => {
+        for (const [container, instance] of pendingAncestorInstances) {
+          if (instances.has(container)) {
+            removeCachedStyle(container);
+            instance.refresh();
           }
         }
-      }
+        pendingAncestorInstances.clear();
+      }, 16);
+    };
 
-      // Re-scan stylesheets for new rules
-      const newContainers = processStyleSheets();
-      for (const container of newContainers) {
-        if (!instances.has(container)) {
-          instances.set(container, new GridLanesLayout(container, options));
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === "attributes") {
+          removeCachedStyle(mutation.target);
+          // If the changed node is an ancestor of (or is) a container,
+          // cascaded/inherited styles on the container may have changed.
+          for (const [container] of instances) {
+            if (mutation.target.contains(container)) {
+              pendingAncestorInstances.set(container, instances.get(container));
+            }
+          }
+          if (pendingAncestorInstances.size > 0) {
+            debouncedRelayoutAll();
+          }
         }
+
+        if (mutation.type === "childList"){
+          for (const node of mutation.addedNodes){
+            if (node.nodeType === node.ELEMENT_NODE) continue;
+
+            processSubtree(node, instances, options);
+          }
+          for (const node of mutation.removedNodes){
+            if (node.nodeType === node.ELEMENT_NODE) continue;
+            if (instances.has(node)){
+              instances.get(node).destroy(); // destroy grid lanes
+              instances.delete(node);
+            }
+            styleMap.delete(node);
+          }
+        }
+
       }
     });
 
     observer.observe(document.documentElement, {
       childList: true,
       subtree: true,
+      attributes: true,
+      attributeFilter: ["style", "class"]
     });
+    
 
     console.log(
       `${POLYFILL_NAME}: Initialized, ${instances.size} container(s) found.`,
@@ -1109,6 +1042,7 @@
           instance.destroy();
         }
         instances.clear();
+        styleMap.clear();
       },
     };
   }
