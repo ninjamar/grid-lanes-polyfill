@@ -448,49 +448,32 @@ function hasGridLanesProperty(elem) {
  * Prefers children over parent elements. Note: nested grid-lanes are not
  * supported because the custom property cascades to all descendants.
  *
- * FIX: Use querySelectorAll + filter to find top-level occurrences by
- * checking if parent also has the property. Avoids TreeWalker complexity.
+ * Uses TreeWalker for efficient traversal and routes through hasGridLanesProperty()
+ * to leverage the catchedGetComputedStyle cache. Correctly handles subtree skipping.
  */
 function findElements(root = document.body) {
   const results = [];
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
 
-  // Iterate all elements and find those with --grid-lanes-polyfill
-  for (const el of root.querySelectorAll("*")) {
-    // Check if element has the property
-    const hasProperty = (() => {
-      try {
-        const style = window.getComputedStyle(el);
-        const val = style.getPropertyValue("--grid-lanes-polyfill").trim();
-        return val === "1";
-      } catch {
-        return false;
+  let node = walker.nextNode(); // start from first child, skip root itself
+  while (node) {
+    if (hasGridLanesProperty(node)) {
+      results.push(node);
+      // Skip the entire subtree of this match by finding the next
+      // node outside of it: try nextSibling, then bubble up ancestors.
+      let next = null;
+      let ancestor = node;
+      while (ancestor && ancestor !== root) {
+        walker.currentNode = ancestor;
+        next = walker.nextSibling();
+        if (next) break;
+        ancestor = ancestor.parentElement;
       }
-    })();
-
-    if (!hasProperty) continue;
-
-    // Check if an ancestor also has the property - if so, skip
-    let skipThis = false;
-    let parent = el.parentElement;
-    while (parent && parent !== root) {
-      try {
-        const parentStyle = window.getComputedStyle(parent);
-        const parentVal = parentStyle.getPropertyValue("--grid-lanes-polyfill").trim();
-        if (parentVal === "1") {
-          skipThis = true;
-          break;
-        }
-      } catch {
-        // Ignore errors in parent check
-      }
-      parent = parent.parentElement;
-    }
-
-    if (!skipThis) {
-      results.push(el);
+      node = next; // null means no more nodes in tree
+    } else {
+      node = walker.nextNode();
     }
   }
-
   return results;
 }
 
