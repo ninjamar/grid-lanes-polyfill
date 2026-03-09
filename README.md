@@ -13,7 +13,7 @@ Originally written by Simon Willison, this edition features numerous enhancement
 - `display: grid-lanes`
 - `grid-template-columns` / `grid-template-rows` for lane definition
 - `gap`, `column-gap`, `row-gap`
-- `item-tolerance` for placement sensitivity
+- `--flow-tolerance` for placement sensitivity
 - Spanning items (`grid-column: span N`)
 - Explicit placement (`grid-column: N / M`)
 - Responsive `auto-fill` / `auto-fit` with `minmax()`

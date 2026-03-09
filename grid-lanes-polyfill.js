@@ -9,7 +9,7 @@
  * - display: grid-lanes
  * - grid-template-columns / grid-template-rows for lane definition
  * - gap, column-gap, row-gap
- * - item-tolerance for placement sensitivity
+ * - --flow-tolerance for placement sensitivity
  * - Spanning items (grid-column: span N)
  * - Explicit placement (grid-column: N / M)
  * - Responsive auto-fill/auto-fit with minmax()
@@ -31,9 +31,6 @@
 const POLYFILL_NAME = "GridLanesPolyfill";
 const POLYFILL_ATTR = "data-grid-lanes-polyfilled";
 const DEFAULT_TOLERANCE = 16; // ~1em in pixels
-
-// Store parsed CSS rules for grid-lanes containers
-const parsedGridLanesRules = new Map();
 
 // Cache computed styles to reduce redundant calls
 const styleMap = new WeakMap();
@@ -304,42 +301,37 @@ function calculateLaneSizes(template, containerSize, gap, fontSize, rootFontSize
  */
 function getGridLanesStyles(element) {
   const computed = window.getComputedStyle(element);
-  const fontSize = parseFloat(computed.fontSize) || 16;
-  const rootFontSize = parseFloat(window.getComputedStyle(document.documentElement).fontSize) || 16;
+  const fontSize = parseFloat(computed.getPropertyValue("font-size")) || 16;
+  const rootFontSize =
+    parseFloat(window.getComputedStyle(document.documentElement).getPropertyValue("font-size")) ||
+    16;
 
-  // Get parsed CSS rules for this element (from raw CSS parsing)
-  const parsedRules = parsedGridLanesRules.get(element) || {};
+  // Get gap values
+  let gap = computed.getPropertyValue("gap") || computed.getPropertyValue("grid-gap") || "0px";
+  let columnGap =
+    computed.getPropertyValue("column-gap") || computed.getPropertyValue("grid-column-gap") || gap;
+  let rowGap =
+    computed.getPropertyValue("row-gap") || computed.getPropertyValue("grid-row-gap") || gap;
 
-  // Get gap values - prefer parsed rules, fall back to computed
-  let gap = parsedRules["gap"] || computed.gap || computed.gridGap || "0px";
-  let columnGap = parsedRules["column-gap"] || computed.columnGap || computed.gridColumnGap || gap;
-  let rowGap = parsedRules["row-gap"] || computed.rowGap || computed.gridRowGap || gap;
-
-  // Handle combined gap values like "24px 16px"
+  // Handle combined gap shorthand like "24px 16px"
   if (gap.includes(" ")) {
     const [rg, cg] = gap.split(/\s+/);
-    if (!parsedRules["row-gap"]) rowGap = rg;
-    if (!parsedRules["column-gap"]) columnGap = cg;
+    rowGap = rg;
+    columnGap = cg;
   }
 
-  // Parse item-tolerance (custom property or default)
+  // Parse flow-tolerance
   let tolerance = DEFAULT_TOLERANCE;
-  const toleranceValue =
-    parsedRules["--item-tolerance"] ||
-    computed.getPropertyValue("--item-tolerance").trim() ||
-    computed.getPropertyValue("item-tolerance").trim();
+  const toleranceValue = computed.getPropertyValue("--flow-tolerance").trim();
+
   if (toleranceValue) {
     const parsed = parseLengthToPixels(toleranceValue, 0, fontSize, rootFontSize);
     if (parsed !== null) tolerance = parsed;
   }
 
-  // Get grid template - prefer parsed rules since computed styles won't work for non-grid elements
-  const gridTemplateColumns = parsedRules["grid-template-columns"] || computed.gridTemplateColumns;
-  const gridTemplateRows = parsedRules["grid-template-rows"] || computed.gridTemplateRows;
-
   return {
-    gridTemplateColumns,
-    gridTemplateRows,
+    gridTemplateColumns: computed.getPropertyValue("grid-template-columns"),
+    gridTemplateRows: computed.getPropertyValue("grid-template-rows"),
     columnGap: parseLengthToPixels(String(columnGap).split(" ")[0], 0, fontSize, rootFontSize) || 0,
     rowGap: parseLengthToPixels(String(rowGap).split(" ")[0], 0, fontSize, rootFontSize) || 0,
     fontSize,
@@ -749,11 +741,8 @@ class GridLanesLayout {
       if (bestHeight - maxHeight > tolerance) {
         bestHeight = maxHeight;
         bestLane = i;
-      } else if (Math.abs(maxHeight - bestHeight) <= tolerance /*&& i < bestLane /*-- Removed because it doesn't seem like this is called*/) {
-        // Within tolerance, prefer earlier lane for reading order
-        bestHeight = maxHeight;
-        bestLane = i;
       }
+      // Within tolerance: keep the current (earlier) bestLane — spec prefers earliest equivalent lane
     }
 
     // Calculate position

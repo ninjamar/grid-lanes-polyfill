@@ -139,6 +139,7 @@ limitations under the License.
 
       /* Demo 1: Basic Photo Gallery */
       .gallery {
+        --grid-lanes-polyfill: 1;
         display: grid-lanes;
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         gap: 16px;
@@ -167,6 +168,7 @@ limitations under the License.
 
       /* Demo 2: Varying Column Widths */
       .varying-cols {
+        --grid-lanes-polyfill: 1;
         display: grid-lanes;
         grid-template-columns:
           repeat(auto-fill, minmax(120px, 1fr) minmax(180px, 2fr))
@@ -199,10 +201,11 @@ limitations under the License.
 
       /* Demo 3: Newspaper Layout with Spanning */
       .newspaper {
+        --grid-lanes-polyfill: 1;
         display: grid-lanes;
         grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
         gap: 24px;
-        --item-tolerance: 1em;
+        --flow-tolerance: 1em;
       }
 
       .article {
@@ -247,6 +250,7 @@ limitations under the License.
 
       /* Demo 4: Explicit Placement */
       .placed {
+        --grid-lanes-polyfill: 1;
         display: grid-lanes;
         grid-template-columns: repeat(5, 1fr);
         gap: 16px;
@@ -271,6 +275,7 @@ limitations under the License.
 
       /* Demo 5: Brick Layout (Horizontal) */
       .brick {
+        --grid-lanes-polyfill: 1;
         display: grid-lanes;
         grid-template-rows: repeat(3, 100px);
         gap: 12px;
@@ -292,6 +297,7 @@ limitations under the License.
 
       /* Demo 6: Mega Menu */
       .mega-menu {
+        --grid-lanes-polyfill: 1;
         display: grid-lanes;
         grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
         gap: 32px 24px;
@@ -374,6 +380,7 @@ limitations under the License.
           them closest to the top.
         </p>
         <pre><code>.gallery {
+  --grid-lanes-polyfill: 1;
   display: grid-lanes;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 16px;
@@ -425,6 +432,7 @@ limitations under the License.
         <h2>Varying Column Widths</h2>
         <p>Alternating narrow and wide columns using complex repeat patterns.</p>
         <pre><code>.varying-cols {
+  --grid-lanes-polyfill: 1;
   display: grid-lanes;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr) minmax(180px, 2fr)) minmax(120px, 1fr);
   gap: 12px;
@@ -477,9 +485,11 @@ limitations under the License.
         <h2>Newspaper Layout with Spanning</h2>
         <p>Using <code>grid-column: span N</code> to create hero and featured articles.</p>
         <pre><code>.newspaper {
+  --grid-lanes-polyfill: 1;
   display: grid-lanes;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 24px;
+  --flow-tolerance: 1em;
 }
 .article.hero { grid-column: span 3; }
 .article.featured { grid-column: span 2; }</code></pre>
@@ -540,6 +550,7 @@ limitations under the License.
           the last column).
         </p>
         <pre><code>.placed {
+  --grid-lanes-polyfill: 1;
   display: grid-lanes;
   grid-template-columns: repeat(5, 1fr);
   gap: 16px;
@@ -565,6 +576,7 @@ limitations under the License.
         <h2>Brick Layout (Horizontal)</h2>
         <p>Define rows instead of columns to create horizontal masonry flow.</p>
         <pre><code>.brick {
+  --grid-lanes-polyfill: 1;
   display: grid-lanes;
   grid-template-rows: repeat(3, 100px);
   gap: 12px;
@@ -589,6 +601,7 @@ limitations under the License.
         <h2>Mega Menu Footer</h2>
         <p>Perfect for navigation footers with variable-length link groups.</p>
         <pre><code>.mega-menu {
+  --grid-lanes-polyfill: 1;
   display: grid-lanes;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 32px 24px;
@@ -666,8 +679,9 @@ limitations under the License.
       </p>
     </footer>
 
-    <script src="grid-lanes-polyfill.js"></script>
-    <script>
+    <script type="module">
+      import GridLanesPolyfill from './grid-lanes-polyfill.js';
+
       document.addEventListener("DOMContentLoaded", function () {
         const statusEl = document.getElementById("status");
 
