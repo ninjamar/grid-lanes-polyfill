@@ -680,7 +680,12 @@ limitations under the License.
     </footer>
 
     <script type="module">
-      import GridLanesPolyfill from './grid-lanes-polyfill.js';
+      import GridLanesPolyfill from "./grid-lanes-polyfill.js?v=2";
+
+      // Initialize polyfill before DOM is ready
+      const polyfillResult = !GridLanesPolyfill.supportsGridLanes()
+        ? GridLanesPolyfill.init({ force: true })
+        : null;
 
       document.addEventListener("DOMContentLoaded", function () {
         const statusEl = document.getElementById("status");
@@ -689,9 +694,7 @@ limitations under the License.
           statusEl.textContent = "Native support detected ✓";
           statusEl.style.setProperty("--status-color", "#22c55e");
         } else {
-          // Initialize polyfill
-          const result = GridLanesPolyfill.init({ force: true });
-          statusEl.textContent = `Polyfill active (${result.instances.size} containers)`;
+          statusEl.textContent = `Polyfill active (${polyfillResult.instances.size} containers)`;
         }
 
         // Handle images loading (re-layout after images load)
@@ -706,7 +709,9 @@ limitations under the License.
               loadedCount++;
               if (loadedCount === images.length) {
                 // Refresh all layouts after all images loaded
-                GridLanesPolyfill.init({ force: true });
+                if (polyfillResult) {
+                  polyfillResult.refresh();
+                }
               }
             });
           }

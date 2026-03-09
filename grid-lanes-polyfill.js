@@ -209,8 +209,10 @@ function calculateLaneSizes(template, containerSize, gap, fontSize, rootFontSize
 
               if (typeof maxVal === "object" && maxVal.fr) {
                 totalFr += maxVal.fr;
+              } else {
+                // Only add to fixedSpace if max is NOT fr (non-flexible tracks)
+                fixedSpace += minVal || 0;
               }
-              fixedSpace += minVal || 0;
             } else if (pt.endsWith("fr")) {
               const fr = parseFloat(pt);
               lanes.push({ min: 0, max: { fr }, size: 0 });
@@ -253,8 +255,10 @@ function calculateLaneSizes(template, containerSize, gap, fontSize, rootFontSize
       lanes.push({ min: minVal || 0, max: maxVal, size: 0 });
       if (typeof maxVal === "object" && maxVal.fr) {
         totalFr += maxVal.fr;
+      } else {
+        // Only add to fixedSpace if max is NOT fr (non-flexible tracks)
+        fixedSpace += minVal || 0;
       }
-      fixedSpace += minVal || 0;
       continue;
     }
 
@@ -443,21 +447,50 @@ function hasGridLanesProperty(elem) {
  * Find all elements with --grid-lanes-polyfill down to the granular level.
  * Prefers children over parent elements. Note: nested grid-lanes are not
  * supported because the custom property cascades to all descendants.
+ *
+ * FIX: Use querySelectorAll + filter to find top-level occurrences by
+ * checking if parent also has the property. Avoids TreeWalker complexity.
  */
 function findElements(root = document.body) {
   const results = [];
-  let walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
 
-  let node = walker.currentNode;
-  while (node) {
-    if (hasGridLanesProperty(node)) {
-      results.push(node);
-      walker.currentNode = node;
-      node = walker.nextSibling();
-    } else {
-      node = walker.nextNode();
+  // Iterate all elements and find those with --grid-lanes-polyfill
+  for (const el of root.querySelectorAll("*")) {
+    // Check if element has the property
+    const hasProperty = (() => {
+      try {
+        const style = window.getComputedStyle(el);
+        const val = style.getPropertyValue("--grid-lanes-polyfill").trim();
+        return val === "1";
+      } catch {
+        return false;
+      }
+    })();
+
+    if (!hasProperty) continue;
+
+    // Check if an ancestor also has the property - if so, skip
+    let skipThis = false;
+    let parent = el.parentElement;
+    while (parent && parent !== root) {
+      try {
+        const parentStyle = window.getComputedStyle(parent);
+        const parentVal = parentStyle.getPropertyValue("--grid-lanes-polyfill").trim();
+        if (parentVal === "1") {
+          skipThis = true;
+          break;
+        }
+      } catch {
+        // Ignore errors in parent check
+      }
+      parent = parent.parentElement;
+    }
+
+    if (!skipThis) {
+      results.push(el);
     }
   }
+
   return results;
 }
 
