@@ -33,7 +33,7 @@ const POLYFILL_ATTR = "data-grid-lanes-polyfilled";
 const DEFAULT_TOLERANCE = 16; // ~1em in pixels
 
 // Cache computed styles to reduce redundant calls
-const styleMap = new WeakMap();
+let styleMap = new WeakMap(); // Not const because map has no clear meaning it has to be initialized later
 
 // ============================================================================
 // FEATURE DETECTION
@@ -718,7 +718,6 @@ class GridLanesLayout {
       element.style.left = `${position}px`;
       element.style.top = `${maxHeight > 0 ? maxHeight + crossGap : 0}px`;
       element.style.width = `${size}px`;
-      element.style.height = "";
     } else {
       element.style.top = `${position}px`;
       element.style.left = `${maxHeight > 0 ? maxHeight + crossGap : 0}px`;
@@ -740,7 +739,10 @@ class GridLanesLayout {
     const gap = this.isVertical ? containerStyles.columnGap : containerStyles.rowGap;
     const crossGap = this.isVertical ? containerStyles.rowGap : containerStyles.columnGap;
     const tolerance = containerStyles.tolerance;
-    const span = this.isVertical ? itemStyles.columnSpan : itemStyles.rowSpan;
+    const span = Math.min(
+      this.isVertical ? itemStyles.columnSpan : itemStyles.rowSpan,
+      this.lanes.length
+    );
 
     // Find the best lane(s) considering tolerance
     let bestLane = 0;
@@ -782,7 +784,6 @@ class GridLanesLayout {
       element.style.left = `${position}px`;
       element.style.top = `${bestHeight > 0 ? bestHeight + crossGap : 0}px`;
       element.style.width = `${size}px`;
-      element.style.height = "";
     } else {
       element.style.top = `${position}px`;
       element.style.left = `${bestHeight > 0 ? bestHeight + crossGap : 0}px`;
@@ -930,7 +931,7 @@ function init(options = {}) {
         instance.destroy();
       }
       instances.clear();
-      styleMap.clear();
+      // TODO: Ensure GC is triggered
     },
   };
 }
