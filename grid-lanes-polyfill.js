@@ -18,7 +18,7 @@
  * Features that do not work:
  * - fr units with grid-template-rows
  *
- * @version 1.1.0
+ * @version 1.0.0
  * @author Simon Willison
  * @author ninjamar
  * @license MIT
