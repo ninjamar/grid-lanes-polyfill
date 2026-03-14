@@ -59,11 +59,7 @@ limitations under the License.
       header h1 {
         font-size: clamp(2rem, 5vw, 3.5rem);
         font-weight: 700;
-        background: linear-gradient(
-          135deg,
-          var(--text) 0%,
-          var(--accent-light) 100%
-        );
+        background: linear-gradient(135deg, var(--text) 0%, var(--accent-light) 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -143,6 +139,7 @@ limitations under the License.
 
       /* Demo 1: Basic Photo Gallery */
       .gallery {
+        --grid-lanes-polyfill: 1;
         display: grid-lanes;
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         gap: 16px;
@@ -171,6 +168,7 @@ limitations under the License.
 
       /* Demo 2: Varying Column Widths */
       .varying-cols {
+        --grid-lanes-polyfill: 1;
         display: grid-lanes;
         grid-template-columns:
           repeat(auto-fill, minmax(120px, 1fr) minmax(180px, 2fr))
@@ -203,10 +201,11 @@ limitations under the License.
 
       /* Demo 3: Newspaper Layout with Spanning */
       .newspaper {
+        --grid-lanes-polyfill: 1;
         display: grid-lanes;
         grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
         gap: 24px;
-        --item-tolerance: 1em;
+        --flow-tolerance: 1em;
       }
 
       .article {
@@ -251,6 +250,7 @@ limitations under the License.
 
       /* Demo 4: Explicit Placement */
       .placed {
+        --grid-lanes-polyfill: 1;
         display: grid-lanes;
         grid-template-columns: repeat(5, 1fr);
         gap: 16px;
@@ -275,6 +275,7 @@ limitations under the License.
 
       /* Demo 5: Brick Layout (Horizontal) */
       .brick {
+        --grid-lanes-polyfill: 1;
         display: grid-lanes;
         grid-template-rows: repeat(3, 100px);
         gap: 12px;
@@ -296,6 +297,7 @@ limitations under the License.
 
       /* Demo 6: Mega Menu */
       .mega-menu {
+        --grid-lanes-polyfill: 1;
         display: grid-lanes;
         grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
         gap: 32px 24px;
@@ -363,8 +365,8 @@ limitations under the License.
     <header>
       <h1>CSS Grid Lanes Polyfill</h1>
       <p>
-        A polyfill for the new <code>display: grid-lanes</code> CSS feature,
-        enabling masonry-style layouts in all browsers.
+        A polyfill for the new <code>display: grid-lanes</code> CSS feature, enabling masonry-style
+        layouts in all browsers.
       </p>
       <div class="status" id="status">Checking support...</div>
     </header>
@@ -374,10 +376,11 @@ limitations under the License.
       <section>
         <h2>Basic Photo Gallery</h2>
         <p>
-          The classic masonry layout with auto-fill columns. Items flow into
-          whichever column gets them closest to the top.
+          The classic masonry layout with auto-fill columns. Items flow into whichever column gets
+          them closest to the top.
         </p>
         <pre><code>.gallery {
+  --grid-lanes-polyfill: 1;
   display: grid-lanes;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 16px;
@@ -412,22 +415,13 @@ limitations under the License.
               <img src="https://picsum.photos/400/340?random=9" alt="Photo 9" />
             </div>
             <div class="gallery-item">
-              <img
-                src="https://picsum.photos/400/290?random=10"
-                alt="Photo 10"
-              />
+              <img src="https://picsum.photos/400/290?random=10" alt="Photo 10" />
             </div>
             <div class="gallery-item">
-              <img
-                src="https://picsum.photos/400/400?random=11"
-                alt="Photo 11"
-              />
+              <img src="https://picsum.photos/400/400?random=11" alt="Photo 11" />
             </div>
             <div class="gallery-item">
-              <img
-                src="https://picsum.photos/400/360?random=12"
-                alt="Photo 12"
-              />
+              <img src="https://picsum.photos/400/360?random=12" alt="Photo 12" />
             </div>
           </div>
         </div>
@@ -436,10 +430,9 @@ limitations under the License.
       <!-- Demo 2: Varying Column Widths -->
       <section>
         <h2>Varying Column Widths</h2>
-        <p>
-          Alternating narrow and wide columns using complex repeat patterns.
-        </p>
+        <p>Alternating narrow and wide columns using complex repeat patterns.</p>
         <pre><code>.varying-cols {
+  --grid-lanes-polyfill: 1;
   display: grid-lanes;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr) minmax(180px, 2fr)) minmax(120px, 1fr);
   gap: 12px;
@@ -452,10 +445,7 @@ limitations under the License.
             </div>
             <div class="card">
               <h3>Medium Card</h3>
-              <p>
-                This card has a moderate amount of content that takes up more
-                vertical space.
-              </p>
+              <p>This card has a moderate amount of content that takes up more vertical space.</p>
             </div>
             <div class="card">
               <h3>Tiny</h3>
@@ -464,8 +454,8 @@ limitations under the License.
             <div class="card">
               <h3>Longer Content</h3>
               <p>
-                This card contains significantly more text content that will
-                cause it to be taller than some of its neighbors.
+                This card contains significantly more text content that will cause it to be taller
+                than some of its neighbors.
               </p>
             </div>
             <div class="card">
@@ -475,8 +465,7 @@ limitations under the License.
             <div class="card">
               <h3>Extended</h3>
               <p>
-                A more detailed description that spans multiple lines and
-                creates visual variety.
+                A more detailed description that spans multiple lines and creates visual variety.
               </p>
             </div>
             <div class="card">
@@ -494,14 +483,13 @@ limitations under the License.
       <!-- Demo 3: Newspaper Layout -->
       <section>
         <h2>Newspaper Layout with Spanning</h2>
-        <p>
-          Using <code>grid-column: span N</code> to create hero and featured
-          articles.
-        </p>
+        <p>Using <code>grid-column: span N</code> to create hero and featured articles.</p>
         <pre><code>.newspaper {
+  --grid-lanes-polyfill: 1;
   display: grid-lanes;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 24px;
+  --flow-tolerance: 1em;
 }
 .article.hero { grid-column: span 3; }
 .article.featured { grid-column: span 2; }</code></pre>
@@ -510,25 +498,19 @@ limitations under the License.
             <article class="article hero">
               <h3>Breaking: CSS Grid Lanes Revolutionizes Web Layout</h3>
               <p>
-                The long-awaited masonry layout feature has finally arrived,
-                bringing native support for waterfall-style layouts without
-                JavaScript.
+                The long-awaited masonry layout feature has finally arrived, bringing native support
+                for waterfall-style layouts without JavaScript.
               </p>
               <div class="meta">Technology • 5 min read</div>
             </article>
             <article class="article featured">
               <h3>The Future of Responsive Design</h3>
-              <p>
-                How Grid Lanes changes everything we know about fluid layouts.
-              </p>
+              <p>How Grid Lanes changes everything we know about fluid layouts.</p>
               <div class="meta">Design • 3 min read</div>
             </article>
             <article class="article featured">
               <h3>Performance Gains with Native Masonry</h3>
-              <p>
-                Benchmarks show significant improvements over JavaScript
-                solutions.
-              </p>
+              <p>Benchmarks show significant improvements over JavaScript solutions.</p>
               <div class="meta">Performance • 4 min read</div>
             </article>
             <article class="article">
@@ -564,10 +546,11 @@ limitations under the License.
       <section>
         <h2>Explicit Placement</h2>
         <p>
-          Using negative indices to place items in specific columns (the
-          "Special" item is placed in the last column).
+          Using negative indices to place items in specific columns (the "Special" item is placed in
+          the last column).
         </p>
         <pre><code>.placed {
+  --grid-lanes-polyfill: 1;
   display: grid-lanes;
   grid-template-columns: repeat(5, 1fr);
   gap: 16px;
@@ -593,6 +576,7 @@ limitations under the License.
         <h2>Brick Layout (Horizontal)</h2>
         <p>Define rows instead of columns to create horizontal masonry flow.</p>
         <pre><code>.brick {
+  --grid-lanes-polyfill: 1;
   display: grid-lanes;
   grid-template-rows: repeat(3, 100px);
   gap: 12px;
@@ -617,6 +601,7 @@ limitations under the License.
         <h2>Mega Menu Footer</h2>
         <p>Perfect for navigation footers with variable-length link groups.</p>
         <pre><code>.mega-menu {
+  --grid-lanes-polyfill: 1;
   display: grid-lanes;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 32px 24px;
@@ -694,8 +679,14 @@ limitations under the License.
       </p>
     </footer>
 
-    <script src="grid-lanes-polyfill.js"></script>
-    <script>
+    <script type="module">
+      import GridLanesPolyfill from "./grid-lanes-polyfill.js?v=2";
+
+      // Initialize polyfill before DOM is ready
+      const polyfillResult = !GridLanesPolyfill.supportsGridLanes()
+        ? GridLanesPolyfill.init({ force: true })
+        : null;
+
       document.addEventListener("DOMContentLoaded", function () {
         const statusEl = document.getElementById("status");
 
@@ -703,9 +694,7 @@ limitations under the License.
           statusEl.textContent = "Native support detected ✓";
           statusEl.style.setProperty("--status-color", "#22c55e");
         } else {
-          // Initialize polyfill
-          const result = GridLanesPolyfill.init({ force: true });
-          statusEl.textContent = `Polyfill active (${result.instances.size} containers)`;
+          statusEl.textContent = `Polyfill active (${polyfillResult.instances.size} containers)`;
         }
 
         // Handle images loading (re-layout after images load)
@@ -720,7 +709,9 @@ limitations under the License.
               loadedCount++;
               if (loadedCount === images.length) {
                 // Refresh all layouts after all images loaded
-                GridLanesPolyfill.init({ force: true });
+                if (polyfillResult) {
+                  polyfillResult.refresh();
+                }
               }
             });
           }
