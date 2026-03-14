@@ -16,7 +16,7 @@ Originally written by Simon Willison, this edition features numerous enhancement
 - `--flow-tolerance` for placement sensitivity
 - Spanning items (`grid-column: span N`)
 - Explicit placement (`grid-column: N / M`)
-- Responsive `auto-fill` / `auto-fit` with `minmax()`
+- Responsive `auto-fill` / `auto-fit` with `minmax()` (See [section 3](#3-using---grid-template-columns-and---grid-template-rows-for-auto-fill--auto-fit))
 - Both waterfall (columns) and brick (rows) layouts
 
 ## Limitations
@@ -72,6 +72,20 @@ This is required because browsers strip unknown properties and values (including
 
 > [!NOTE]
 > The script parses CSS in many ways. Inline styles and root stylesheets may be parsed "as is", meaning that this custom property technically is not always needed. However, this is subject to change, so it is important to include it.
+
+### 3. Using `--grid-template-columns` and `--grid-template-rows` for `auto-fill` / `auto-fit`
+
+When using `repeat(auto-fill, ...)` or `repeat(auto-fit, ...)` in your grid template, you **must** provide a custom property version of the same template. This is because browsers do not compute the value properly of `grid-template-columns` if it contains `auto-fill` and `auto-fit`.
+
+```css
+.gallery {
+  --grid-lanes-polyfill: 1;
+  display: grid-lanes;
+  /* grid-template-columns: ...*/
+  --grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+```
 
 ## Version
 
