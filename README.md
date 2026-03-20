@@ -5,7 +5,7 @@ A polyfill for the new `display: grid-lanes` CSS feature, enabling support in br
 This implementation is based on the WebKit proposal described here:  
 https://webkit.org/blog/17660/introducing-css-grid-lanes/
 
-Originally written by Simon Willison, this edition features numerous enhancements to make the original work properly.
+[Originally written by Simon Willison](https://github.com/simonw/tools/blob/main/grid-lanes-polyfill.js), this edition features numerous enhancements to make the original work properly.
 
 ## Supported Features
 
