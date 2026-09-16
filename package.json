@@ -5,7 +5,7 @@
   "keywords": [],
   "license": "ISC",
   "author": "",
-  "main": "grid-lanes-polyfill.js",
+  "main": "index.js",
   "scripts": {
     "test": "playwright test",
     "fmt": "oxfmt",
