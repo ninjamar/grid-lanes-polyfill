@@ -604,14 +604,6 @@ class GridLanesLayout {
 
     this.isVertical = hasColumns || !hasRows;
 
-    // Clear the axis that this mode doesn't control, so a prior layout in the
-    // opposite mode doesn't leave stale inline styles on children.
-    for (const child of this.container.children) {
-      if (child.nodeType !== Node.ELEMENT_NODE) continue;
-      if (this.isVertical) child.style.height = "";
-      else child.style.width = "";
-    }
-
     // Calculate lane sizes
     if (this.isVertical) {
       this.lanes = calculateLaneSizes(
@@ -724,6 +716,7 @@ class GridLanesLayout {
       element.style.top = `${maxHeight > 0 ? maxHeight + crossGap : 0}px`;
       element.style.width = `${size}px`;
     } else {
+      element.style.width = "";
       element.style.top = `${position}px`;
       element.style.left = `${maxHeight > 0 ? maxHeight + crossGap : 0}px`;
       element.style.height = `${size}px`;
@@ -789,6 +782,7 @@ class GridLanesLayout {
       element.style.top = `${bestHeight > 0 ? bestHeight + crossGap : 0}px`;
       element.style.width = `${size}px`;
     } else {
+      element.style.width = "";
       element.style.top = `${position}px`;
       element.style.left = `${bestHeight > 0 ? bestHeight + crossGap : 0}px`;
       element.style.height = `${size}px`;
