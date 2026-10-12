@@ -590,7 +590,12 @@ class GridLanesLayout {
 
   layout() {
     const styles = getGridLanesStyles(this.container);
-    const containerRect = this.container.getBoundingClientRect();
+    // Use offsetWidth/offsetHeight, not getBoundingClientRect(), so a
+    // transform on the container (or an ancestor) doesn't skew layout sizing.
+    const containerRect = {
+      width: this.container.offsetWidth,
+      height: this.container.offsetHeight,
+    };
 
     // Determine direction based on which template is defined
     const hasColumns =
@@ -722,9 +727,10 @@ class GridLanesLayout {
       element.style.height = `${size}px`;
     }
 
-    // Update lane heights
-    const itemRect = element.getBoundingClientRect();
-    const itemSize = this.isVertical ? itemRect.height : itemRect.width;
+    // Update lane heights. Use offsetWidth/offsetHeight, not
+    // getBoundingClientRect(), so a CSS transform on the item (scale, rotate,
+    // etc.) doesn't skew the measured layout size.
+    const itemSize = this.isVertical ? element.offsetHeight : element.offsetWidth;
     const newHeight = maxHeight + (maxHeight > 0 ? crossGap : 0) + itemSize;
 
     for (let i = laneIndex; i < endLane; i++) {
@@ -788,9 +794,10 @@ class GridLanesLayout {
       element.style.height = `${size}px`;
     }
 
-    // Update lane heights
-    const itemRect = element.getBoundingClientRect();
-    const itemSize = this.isVertical ? itemRect.height : itemRect.width;
+    // Update lane heights. Use offsetWidth/offsetHeight, not
+    // getBoundingClientRect(), so a CSS transform on the item (scale, rotate,
+    // etc.) doesn't skew the measured layout size.
+    const itemSize = this.isVertical ? element.offsetHeight : element.offsetWidth;
     const newHeight = bestHeight + (bestHeight > 0 ? crossGap : 0) + itemSize;
 
     for (let i = bestLane; i < endLane; i++) {
