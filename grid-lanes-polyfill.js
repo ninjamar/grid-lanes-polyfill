@@ -207,11 +207,9 @@ function calculateLaneSizes(template, containerSize, gap, fontSize, rootFontSize
                 size: 0,
               });
 
+              fixedSpace += minVal || 0;
               if (typeof maxVal === "object" && maxVal.fr) {
                 totalFr += maxVal.fr;
-              } else {
-                // Only add to fixedSpace if max is NOT fr (non-flexible tracks)
-                fixedSpace += minVal || 0;
               }
             } else if (pt.endsWith("fr")) {
               const fr = parseFloat(pt);
@@ -253,11 +251,9 @@ function calculateLaneSizes(template, containerSize, gap, fontSize, rootFontSize
         : parseLengthToPixels(minmax.max, containerSize, fontSize, rootFontSize);
 
       lanes.push({ min: minVal || 0, max: maxVal, size: 0 });
+      fixedSpace += minVal || 0;
       if (typeof maxVal === "object" && maxVal.fr) {
         totalFr += maxVal.fr;
-      } else {
-        // Only add to fixedSpace if max is NOT fr (non-flexible tracks)
-        fixedSpace += minVal || 0;
       }
       continue;
     }
@@ -608,6 +604,14 @@ class GridLanesLayout {
 
     this.isVertical = hasColumns || !hasRows;
 
+    // Clear the axis that this mode doesn't control, so a prior layout in the
+    // opposite mode doesn't leave stale inline styles on children.
+    for (const child of this.container.children) {
+      if (child.nodeType !== Node.ELEMENT_NODE) continue;
+      if (this.isVertical) child.style.height = "";
+      else child.style.width = "";
+    }
+
     // Calculate lane sizes
     if (this.isVertical) {
       this.lanes = calculateLaneSizes(
@@ -662,7 +666,10 @@ class GridLanesLayout {
 
     // Set container height
     const containerHeight = Math.max(...this.laneHeights);
-    this.container.style.minHeight = `${containerHeight}px`;
+    const newMin = `${containerHeight}px`;
+    if (this.container.style.minHeight !== newMin) {
+      this.container.style.minHeight = newMin;
+    }
   }
 
   placeExplicitItem(element, itemStyles, containerStyles) {
@@ -720,7 +727,6 @@ class GridLanesLayout {
       element.style.top = `${position}px`;
       element.style.left = `${maxHeight > 0 ? maxHeight + crossGap : 0}px`;
       element.style.height = `${size}px`;
-      element.style.width = "";
     }
 
     // Update lane heights
@@ -786,7 +792,6 @@ class GridLanesLayout {
       element.style.top = `${position}px`;
       element.style.left = `${bestHeight > 0 ? bestHeight + crossGap : 0}px`;
       element.style.height = `${size}px`;
-      element.style.width = "";
     }
 
     // Update lane heights
@@ -878,7 +883,7 @@ function init(options = {}) {
         // If the changed node is an ancestor of (or is) a container,
         // cascaded/inherited styles on the container may have changed.
         for (const [container] of instances) {
-          if (mutation.target.contains(container)) {
+          if (mutation.target !== container && mutation.target.contains(container)) {
             pendingAncestorInstances.set(container, instances.get(container));
           }
         }
