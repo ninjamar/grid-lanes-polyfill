@@ -1,11 +1,31 @@
 {
   "name": "grid-lanes-polyfill",
-  "version": "1.0.0",
-  "description": "",
-  "keywords": [],
-  "license": "ISC",
-  "author": "",
-  "main": "index.js",
+  "version": "1.1.0",
+  "description": "A polyfill for CSS Grid Lanes (display: grid-lanes), the masonry/waterfall layout from CSS Grid Layout Module Level 3.",
+  "keywords": [
+    "css",
+    "grid",
+    "grid-lanes",
+    "masonry",
+    "polyfill",
+    "waterfall"
+  ],
+  "license": "MIT",
+  "author": "ninjamar",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ninjamar/grid-lanes-polyfill.git"
+  },
+  "homepage": "https://github.com/ninjamar/grid-lanes-polyfill#readme",
+  "bugs": "https://github.com/ninjamar/grid-lanes-polyfill/issues",
+  "type": "module",
+  "main": "grid-lanes-polyfill.js",
+  "exports": "./grid-lanes-polyfill.js",
+  "files": [
+    "grid-lanes-polyfill.js",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "test": "playwright test",
     "fmt": "oxfmt",
@@ -13,11 +33,9 @@
     "lint": "oxlint",
     "lint:fix": "oxlint --fix"
   },
-  "dependencies": {
-    "http-server": "^14.1.1"
-  },
   "devDependencies": {
     "@playwright/test": "^1.50.0",
+    "http-server": "^14.1.1",
     "oxfmt": "^0.36.0",
     "oxlint": "^1.51.0"
   },
