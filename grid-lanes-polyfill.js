@@ -961,5 +961,5 @@ export default {
   init,
   apply,
   GridLanesLayout,
-  version: "1.1.0",
+  version: "1.1.1",
 };

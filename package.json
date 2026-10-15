@@ -1,6 +1,6 @@
 {
   "name": "grid-lanes-polyfill",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A polyfill for CSS Grid Lanes (display: grid-lanes), the masonry/waterfall layout from CSS Grid Layout Module Level 3.",
   "keywords": [
     "css",

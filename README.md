@@ -27,15 +27,33 @@ The following features are **not** supported:
 
 ## Usage
 
-### 1. Load and Initialize the polyfill
+### 1. Install
 
-Use ES6 modules to load and initialize the polyfill:
+Pick one:
+
+**npm**
+
+```bash
+npm i grid-lanes-polyfill
+```
+
+**CDN (jsDelivr)**
+
+```js
+import GridLanesPolyfill from "https://cdn.jsdelivr.net/npm/grid-lanes-polyfill@latest/grid-lanes-polyfill.js";
+```
+
+**Local**: download [`grid-lanes-polyfill.js`](./grid-lanes-polyfill.js) and import it by relative path.
+
+### 2. Load and Initialize the polyfill
+
+Use ES6 modules to load and initialize the polyfill. The import specifier depends on how you installed it above: `"grid-lanes-polyfill"` for npm, the jsDelivr URL, or `"./grid-lanes-polyfill.js"` for local:
 
 ```html
 <script type="module">
-  import GridLanesPolyfill from "./grid-lanes-polyfill.js";
+  import GridLanesPolyfill from "grid-lanes-polyfill";
   // OR with named imports:
-  // import { supportsGridLanes, init } from "./grid-lanes-polyfill.js";
+  // import { supportsGridLanes, init } from "grid-lanes-polyfill";
 
   document.addEventListener("DOMContentLoaded", () => {
     if (!GridLanesPolyfill.supportsGridLanes()) {
@@ -48,7 +66,7 @@ Use ES6 modules to load and initialize the polyfill:
 Alternatively, use named imports:
 
 ```js
-import { supportsGridLanes, init } from "./grid-lanes-polyfill.js";
+import { supportsGridLanes, init } from "grid-lanes-polyfill";
 
 document.addEventListener("DOMContentLoaded", () => {
   if (!supportsGridLanes()) {
@@ -57,7 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 ```
 
-### 2. Add the required custom property in CSS
+### 3. Add the required custom property in CSS
 
 For every element using `display: grid-lanes`, you **must** include the following custom property:
 
@@ -73,7 +91,7 @@ This is required because browsers strip unknown properties and values (including
 > [!NOTE]
 > The script parses CSS in many ways. Inline styles and root stylesheets may be parsed "as is", meaning that this custom property technically is not always needed. However, this is subject to change, so it is important to include it.
 
-### 3. Using `--grid-template-columns` and `--grid-template-rows` for `auto-fill` / `auto-fit`
+### 4. Using `--grid-template-columns` and `--grid-template-rows` for `auto-fill` / `auto-fit`
 
 When using `repeat(auto-fill, ...)` or `repeat(auto-fit, ...)` in your grid template, you **must** provide a custom property version of the same template. This is because browsers do not compute the value properly of `grid-template-columns` if it contains `auto-fill` and `auto-fit`.
 
@@ -86,10 +104,6 @@ When using `repeat(auto-fill, ...)` or `repeat(auto-fit, ...)` in your grid temp
   gap: 16px;
 }
 ```
-
-## Version
-
-**2.0.0**
 
 ## Authors
 
